@@ -648,7 +648,7 @@ public with sharing class palCreationCtrl {
 
         }
 
-        if(PPALListToUpdate.size() > 0){
+        if(PPALListToUpdate.size() > 0 && PPALListToUpdate.size()>1){
             update PPALListToUpdate;
         }
         if(palRecToUpdate.size() > 0){
