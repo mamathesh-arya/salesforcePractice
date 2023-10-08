@@ -433,7 +433,8 @@ public with sharing class palCreationCtrl {
                             String htmlBody = emailTemplate.HtmlValue;
                             Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                             String[] toAddresses = new String[]{palEmailObj.Financial_Account_Email__c};
-                                mail.setToAddresses(toAddresses);
+							// commenting for better understanding
+                             mail.setToAddresses(toAddresses);
                             mail.setOrgWideEmailAddressId(owea.get(0).Id);
                             mail.setReplyTo(UtilContant.accountsPayableEmail);//accountspayable@questtrust.com
                             mail.setBccSender(false);
@@ -543,7 +544,7 @@ public with sharing class palCreationCtrl {
                 ppal.Code_Proceed__c= pal.Code_Proceed__c;
                 ppal.Percentage_Split_by_If_Any__c= pal.Percentage_Split_by_If_Any__c;
                 ppal.Closing_Account__c= pal.Closing_Account_Fee__c;
-
+				//Additional comments added for understanding git
                 ppal.Combine_Checks__c = pal.Combine_Checks__c;
                 ppal.Funding_Status__c = 'Pending';
                 ppal.ABA_Routing__c = pal.ABA_Routing__c;
@@ -651,7 +652,7 @@ public with sharing class palCreationCtrl {
         if(PPALListToUpdate.size() > 0 && PPALListToUpdate.size()>1){
             update PPALListToUpdate;
         }
-        if(palRecToUpdate.size() > 0){
+        if(palRecToUpdate.size() > 0 && palRecToUpdate.size()>0){
             update palRecToUpdate;
         }
 
