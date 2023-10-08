@@ -8,7 +8,7 @@
 public with sharing class palCreationCtrl {
 
     public static boolean firstUpdateRun = true;
-	public static boolean issueIL = true;
+	public static boolean issueIL = false;
     public Payment_Authorization_Letter__c pal{get;set;}
     public string recordtypeid;
     public String recordtypeName{get;set;}
