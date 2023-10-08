@@ -624,6 +624,7 @@ public with sharing class palCreationCtrl {
             }
 
             palRecToUpdate.add(palRec);
+//testing
         }
 
         list<Pending_Payment_Authorization_Letters__c> PPALListToUpdate = new list<Pending_Payment_Authorization_Letters__c>();
