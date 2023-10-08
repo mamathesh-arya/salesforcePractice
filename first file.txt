@@ -1,4 +1,661 @@
-1. First file on first file
-2.Second Line Added
-3.Third line on 1
-4. Il-101 worked fine
+/**
+ * @description       :
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             :
+ * @last modified on  : 09-29-2023
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
+public with sharing class palCreationCtrl {
+
+    public static boolean firstUpdateRun = true;
+    public Payment_Authorization_Letter__c pal{get;set;}
+    public string recordtypeid;
+    public String recordtypeName{get;set;}
+    public String palFileName {get; set;}
+    public String palContentType {get; set;}
+    public Blob palAttached {get; set;}
+    public String invoiceFileName {get; set;}
+    public String invoiceContentType {get; set;}
+    public Transient Blob invoiceAttached {get; set;}
+    public Id PalIdedit{get;set;}
+    public boolean isAttachmentHideInvoice{get;set;}
+    public boolean isAttachmentHidePAL{get;set;}
+    public boolean isButtonHideShow{get;set;}
+    public boolean isAttachmentNotThere{get;set;}
+    public List<Attachment> attlist{get;set;}
+    public static string recordTypeOneTimePalContact = 'One-Time PAL Contact';
+    public decimal totalcashvalue{get;set;}
+    public palCreationCtrl(ApexPages.StandardController stdController){
+        totalcashvalue = 0.00;
+        isButtonHideShow = false;
+        isAttachmentHideInvoice = false;
+        isAttachmentHidePAL = true;
+        isAttachmentNotThere = true;
+        attlist = new List<Attachment>();
+        pal = new Payment_Authorization_Letter__c();
+        PalIdedit = stdController.getId();
+        recordtypeid = ApexPages.currentPage().getParameters().get('RecordType');
+        String recordType = ApexPages.currentPage().getParameters().get('recprdtypeName');
+        String finId = ApexPages.currentPage().getParameters().get('finId');
+        id palAWhileAttId  = ApexPages.currentPage().getParameters().get('palId');
+        String HoldingId = ApexPages.currentPage().getParameters().get('HoldingId');
+        String HoldingFinId = ApexPages.currentPage().getParameters().get('HoldingFinId');
+
+        system.debug('RecordType === '+RecordType);
+        system.debug('recprdtypeName === '+recordType);
+        system.debug('finId === '+finId);
+        system.debug('palAWhileAttId === '+palAWhileAttId);
+        system.debug('HoldingId === '+HoldingId);
+        system.debug('HoldingFinId === '+HoldingFinId);
+        if(HoldingFinId != null || finId != null){
+            List<Financial_Account__c> finRecord = [Select id,Total_Cash_Available_For_Use__c from Financial_Account__c where Id =: HoldingFinId or ID =:finId limit 1];
+            if(finRecord.size() > 0){
+                totalcashvalue =     finRecord[0].Total_Cash_Available_For_Use__c;
+            }
+
+        }
+
+
+        if(palAWhileAttId != null){
+            PalIdedit = palAWhileAttId;
+        }
+        if(recordtypeid != null){
+            RecordType rpName = [Select id,Name,DeveloperName from Recordtype where Id=:recordtypeid];
+            recordtypeName = rpName.Name;
+            system.debug('--recordtypeName---'+recordtypeName);
+        }
+        if(PalIdedit != null){
+            pal = [Select p.Waive_Fees_Comment__c,p.Waive__c,p.No_Holding_Invoice_Needed__c,p.Code_Proceed__c,p.Status__c,p.Date_of_Monthly_Process__c ,p.Recordtype.Name,p.Zip_Postal_Code__c, p.Wire_Fee__c, p.Wire_Account_Name__c, p.Type_of_PAL__c,
+                   p.Transaction__c, p.Transaction_Date__c, p.Transaction_Codes__c, p.Transaction_Code__c, p.Transaction_Amount__c,
+                   p.Third_Contact_s__c, p.Third_Contact__c, p.Sufficient_Funds_Available__c,p.Split_Number2__c,p.Split_Number__c, p.Signature__c, p.Second_Contact_s__c, p.Second_Contact__c,
+                   p.Second_Contact_Email__c,p.Recurrence_Date__c, p.RecordTypeId, p.Percentage_Split_by_If_Any__c, p.Payment_Type__c, p.Payee_Lookup__c,
+                   p.Payable_To__c, p.Payable_To_Account__c, p.OwnerId, p.Overnight_Mail__c, p.Other_Type_of_PAL__c,
+                   p.Other_Instructions__c, p.One_Time_Payee_Name__c,p.Number_of_Units__c,p.Name, p.Mailing_Options__c, p.Mail_Pickup_Option__c,
+                   p.Invoice_Sent_To__c, p.Initial_Due_Date__c, p.Id, p.Holding__c, p.General_Comments__c, p.Funds_Available__c,
+                   p.Funding_Status__c, p.Frequency_of_Payments__c, p.Frequency__c, p.Frequency_Start_Date__c, p.Frequency_Date__c,
+                   p.First_Contact_s__c, p.First_Contact__c, p.Financial_Account__c, p.Financial_Account_Email__c, p.Final_Contact_s__c,
+                   p.Final_Contact__c, p.Fees__c, p.Fee_Method_Selected__c,p.Employee_Making_Third_Contact__c, p.Employee_Making_Fourth_Contact__c,
+                   p.Employee_Making_First_Contact__c, p.Employee_Making_2nd_Contact__c, p.Due_Date__c,
+                   p.Date_of_Third_Contact__c, p.Date_of_Second_Contact__c, p.Date_of_First_Contact__c, p.Date_of_Final_Contact__c,
+                   p.Date_Payment_Sent__c,p.Create_Unique_Split_Number__c,p.Combine_Checks__c, p.Closing_Fee_Charged__c,
+                   p.Closing_Account__c, p.Closing_Account_Fee__c,p.Checking_Savings__c, p.Check_made_attention_to__c, p.Check_Status__c,
+                   p.Check_Payable_To__c, p.Check_Options__c, p.Check_Memo__c, p.Check_ACH_Fee__c, p.Check_Fee__c, p.ACH_Fee__c, p.Cashiers_Check_Fee__c,
+                   p.Cash_Available_For_Use__c, p.Businesses_Individuals__c, p.Authorization__c, p.Aug__c, p.Asset__c,
+                   p.Amount_to_be_sent__c, p.Amount__c, p.Active_Status__c, p.Account_Number__c, p.Account_Name__c, p.Account_Holder_Name__c,
+                   p.ABA_Routing__c, p.ABA_Account__c, p.Tax_Year__c, p.Comment_1__c, p.Comment_2__c, p.Payable_To_Account__r.Name,
+                   p.Payment_Beginning_Date__c,p.Last_Payment_Date__c,p.USPS_Trackable_Mail_Fee__c,USPS_Fee__c,FMV_Acknowledgement__c,FMVAcknowledgement__c From Payment_Authorization_Letter__c p
+
+                   where id =: PalIdedit];
+
+            attlist = [select id,Name from Attachment  where parentId =:PalIdedit];
+            system.debug('--pal.Recordtype.Name---'+pal.Recordtype.Name);
+            system.debug('--recordtypeName---'+recordtypeName);
+            if(recordtypeName == null){
+                recordtypeName = pal.Recordtype.Name;
+            }
+
+                if(recordtypeName == pal.Recordtype.Name && pal.Recordtype.Name == recordTypeOneTimePalContact){
+                    isAttachmentHideInvoice = true;
+                }
+                isAttachmentHidePAL = true;
+
+            isButtonHideShow = true;
+            if(recordtypeName == pal.Recordtype.Name && pal.Recordtype.Name == recordTypeOneTimePalContact){
+                isButtonHideShow = true;
+            }else{
+                if(isAttachmentHidePAL == false){
+                    isButtonHideShow = false;
+                }
+            }
+             if(pal.Status__c == 'Invoice and Funds Missing'){
+                isAttachmentHideInvoice = false;
+                isAttachmentHidePAL = true;
+            }
+            if(pal.Status__c == 'Funds Unavailable' || pal.Status__c ==  'All Documents Received and Funds available'){
+                isAttachmentHideInvoice = true;
+                isAttachmentHidePAL = true;
+            }
+             if(pal.Status__c == 'PAL Missing' || pal.Status__c == 'PAL and Funds Missing'){
+                isAttachmentHideInvoice = true;
+                isAttachmentHidePAL = false;
+            }
+            if(pal.Status__c == 'Invoice missing'){
+                isAttachmentHideInvoice = false;
+                isAttachmentHidePAL = true;
+            }
+
+            //recordtypeid = pal.RecordtypeId;
+            //system.debug('--recordtypeid---'+recordtypeid);
+            //RecordType rpName = [Select id,Name,DeveloperName from Recordtype where Id=:recordtypeid];
+            //recordtypeName = rpName.Name;
+            system.debug('--recordtypeName---'+recordtypeName);
+
+        }else{
+            isAttachmentHidePAL = true;
+            isButtonHideShow = true;
+            if(PalIdedit == null && recordType == recordTypeOneTimePalContact){
+                isAttachmentHideInvoice = true;
+            }
+            pal.RecordtypeId= recordtypeid;
+        }
+        if(finId != null){
+            pal.Financial_Account__c = finId;
+        }
+        if(HoldingId != null){
+            pal.Holding__c = HoldingId;
+        }
+        if(HoldingFinId != null){
+            pal.Financial_Account__c = HoldingFinId;
+        }
+
+    }
+
+    public PageReference payblechangeSave(){
+        try{
+            pal.recordtypeId = recordtypeid;
+            system.debug('--recordtypeName---'+recordtypeName);
+            if(recordtypeName != 'Monthly' && recordtypeName != 'Adobe Sign' && pal.Payable_To_Account__c == null ){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Payable To is mandatory!'));
+                return null;
+            }
+            if(pal.Combine_Checks__c == null && (pal.Payment_Type__c == 'Check' || pal.Payment_Type__c == 'ACH')){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Combine Checks is mandatory!'));
+                return null;
+            }
+            if(pal.Financial_Account__c == null){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Financial Account is mandatory!'));
+                return null;
+            }
+            if(recordtypeName  !='Monthly' && recordtypeName != 'Adobe Sign' && (pal.Type_of_PAL__c == null || pal.Type_of_PAL__c == '')){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Type Of PAL is mandatory!'));
+                return null;
+            }
+            // Monthly Record type
+
+            if(recordtypeName  =='Monthly' && (pal.Type_of_PAL__c == null || pal.Type_of_PAL__c == '')){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Type Of Monthly PAL is mandatory!'));
+                return null;
+            }
+
+            if(!test.isRunningTest() && recordtypeName != 'Adobe Sign' && (pal.Transaction_Codes__c == null || pal.Transaction_Codes__c == '')){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Transaction Code is mandatory!'));
+                return null;
+            }
+            system.debug('--recordtypeName---156--'+recordtypeName);
+            if(recordtypeName == 'Recurring'){
+                if(pal.Frequency__c == null){
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Frequency is mandatory!'));
+                    return null;
+                }
+                if(pal.Initial_Due_Date__c == null){
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Initial Due Date is mandatory!'));
+                    return null;
+                }
+                //pal.Status__c = null;
+            }
+            if(recordtypeName == recordTypeOneTimePalContact){
+                if(pal.Sufficient_Funds_Available__c == null){
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Sufficient Funds Available is mandatory!'));
+                    return null;
+                }
+                if(pal.Signature__c == null){
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Signature is mandatory!'));
+                    return null;
+                }
+            }
+
+            if((pal.Payment_Type__c == 'Cashiers Check' || pal.Payment_Type__c == 'Check') && pal.Mail_Pickup_Option__c == null){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,label.PAL_Mail_Pickup_option));
+                return null;
+            }
+            if(pal.Other_Type_of_PAL__c == null && pal.Type_of_PAL__c == 'Other (in comments)'){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,label.PAL_EnterOtherTypePal));
+                return null;
+            }
+            if(pal.Payment_Type__c =='ACH' && (pal.ABA_Account__c == null || pal.ABA_Routing__c == null || pal.Checking_Savings__c == null)){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'ABA Account # and ABA Routing # are mandatory when payment type is ACH.'));
+                return null;
+            }
+            if(recordtypeName != 'Adobe Sign' && (pal.Holding__c == null && pal.No_Holding_Invoice_Needed__c == false)){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Please select No Holding/Invoice Needed for blank Holding.'));
+                return null;
+            }
+            if(pal.Waive__c == true && (pal.Waive_Fees_Comment__c == '' || pal.Waive_Fees_Comment__c == null)){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Wave fees commet mandatory if Waive is checked!'));
+                return null;
+            }
+            // Added by mitul for IL-153
+            if(pal.Type_of_PAL__c == 'Property Taxes' && String.isBlank(pal.FMVAcknowledgement__c) && recordtypeName != recordTypeOneTimePalContact){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'FMV Acknowledgment is mandatory for Property tax PAL type'));
+                return null;
+            }
+            if(pal.Type_of_PAL__c == 'Property Taxes' && string.isBlank(pal.FMVAcknowledgement__c) && recordtypeName == recordTypeOneTimePalContact){
+                if(pal.Status__c == 'PAL Missing' || pal.Status__c == 'PAL and Funds Missing' || pal.Status__c == 'PAID' || pal.Status__c == 'DO NOT PAY'){ // for IL-153
+                }else{
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'FMV Acknowledgment is mandatory for Property tax PAL type'));
+                    return null;
+                }
+            }
+            if(pal.Type_of_PAL__c == 'Property Taxes' && String.isBlank(pal.Tax_Year__c) && recordtypeName == recordTypeOneTimePalContact){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'Tax Year is mandatory for Property tax PAL type'));
+                return null;
+            }
+            //}
+            // Added code for IL-124 by mitul
+            if(pal.Waive__c == true && (pal.Wire_Fee__c ||  pal.Check_Fee__c || pal.ACH_Fee__c || pal.Overnight_Mail__c || pal.Cashiers_Check_Fee__c || pal.USPS_Fee__c || pal.Closing_Account_Fee__c) ){
+                ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'You cannot make this fee selection when Waive Fee is selected.'));
+                return null;
+            }
+            /*if(pal.Payable_To_Account__r.Name != null){
+                pal.Comment_2__c = pal.Payable_To_Account__r.Name;
+            }
+            if(pal.Transaction_Codes__c != null){
+                pal.Comment_1__c = pal.Transaction_Codes__c;
+            }*/
+            upsert pal;
+
+
+
+            id palId  = ApexPages.currentPage().getParameters().get('id');
+
+                system.debug('--recordtypeName-'+recordtypeName);
+                PageReference pg = new PageReference('/apex/palInvoiceAttachment?palId='+pal.Id+'&recprdtypeName='+recordtypeName);
+                pg.setRedirect(true);
+                return pg;
+
+
+        }catch(Exception e){
+            ApexPages.addMessages(e);
+            return null;
+        }
+    }
+    public PageReference backtoPalandAttachment(){
+        String palId = ApexPages.currentPage().getParameters().get('palId');
+        PageReference pg = new PageReference('/apex/palCreation?palId='+palId);
+        pg.setRedirect(true);
+        return pg;
+    }
+    public PageReference uploadinvoice(){
+        try{
+            String palId = ApexPages.currentPage().getParameters().get('palId');
+            String recordType = ApexPages.currentPage().getParameters().get('recprdtypeName');
+            Payment_Authorization_Letter__c palEmailObj = [
+                select Waive__c ,Waive_Fees_Comment__c,Code_Proceed__c,Email_Sent__c,PAL_Uploaded__c,Invoice_Uploaded__c,Financial_Account__r.Account_Number__c,Holding__c,Holding__r.Asset_Name_Text__c,Status__c,Transaction_Codes__c,Active_Status__c,recordtype.Name,Type_of_PAL__c,Mail_Pickup_Option__c,
+                Financial_Account_Email__c,Financial_Account__c,Holding__r.Related_Asset__c,Transaction_Code__c,Amount__c,
+                Cashiers_Check_Fee__c,Check_ACH_Fee__c,Check_Fee__c,ACH_Fee__c,Overnight_Mail__c,Percentage_Split_by_If_Any__c,Payable_To_Account__c,
+                No_Holding_Invoice_Needed__c,Closing_Account_Fee__c,Wire_Fee__c,Payment_Type__c,Create_Unique_Split_Number__c,Split_Number2__c,Split_Number__c,
+                Wire_Account_Name__c,Combine_Checks__c,Payee_Lookup__r.Name,Payee_Lookup__r.Id, Tax_Year__c
+                ,Payment_Beginning_Date__c,Last_Payment_Date__c,USPS_Trackable_Mail_Fee__c,USPS_Fee__c,FMV_Acknowledgement__c from Payment_Authorization_Letter__c
+                where Id =:palId];
+
+            List<Attachment> attachList = new List<Attachment>();
+            system.debug('--palAttached--'+palAttached);
+            if(palAttached != null){
+                Attachment attachment = new attachment();
+                attachment.Body=palAttached;
+                String AttachmentName = '';
+                if(palEmailObj.Financial_Account__r.Account_Number__c != null){
+                    AttachmentName  = palEmailObj.Financial_Account__r.Account_Number__c;
+                }
+                if(palEmailObj.Holding__r.Asset_Name_Text__c != null){
+                    AttachmentName = AttachmentName + '-'+palEmailObj.Holding__r.Asset_Name_Text__c;
+                }
+                AttachmentName = AttachmentName + '-PAL';
+                List<String> filenameSplit1 = palFileName.split('\\.');
+                attachment.Name=AttachmentName+'.'+filenameSplit1[1];
+                attachment.ContentType=palContentType;
+                attachment.ParentId = palId; // the record the file is attached to
+                attachment.IsPrivate = false;
+                attachList.add(attachment);
+                system.debug(attachment.Name);
+                palEmailObj.PAL_Uploaded__c = true;
+                system.debug('--palEmailObj.PAL_Uploaded__c--'+palEmailObj.PAL_Uploaded__c);
+            }
+            system.debug('--invoiceAttached--'+invoiceAttached);
+            if(invoiceAttached != null){
+                Attachment attachment = new attachment();
+                attachment.Body=invoiceAttached;
+                String AttachmentName ='';
+                if(palEmailObj.Financial_Account__r.Account_Number__c != null){
+                    AttachmentName  = palEmailObj.Financial_Account__r.Account_Number__c;
+                }
+                if(palEmailObj.Holding__r.Asset_Name_Text__c != null){
+                    AttachmentName = AttachmentName + '-'+palEmailObj.Holding__r.Asset_Name_Text__c;
+                }
+                AttachmentName = AttachmentName + '-Invoice';
+                List<String> filenameSplit1 = invoiceFileName.split('\\.');
+                attachment.Name=AttachmentName+'.'+filenameSplit1[1];
+                attachment.ContentType=invoiceContentType;
+                attachment.ParentId = palId; // the record the file is attached to
+                attachment.IsPrivate = false;
+                attachList.add(attachment);
+                palEmailObj.Invoice_Uploaded__c = true;
+            }
+            system.debug('--palEmailObj.Status__c---'+palEmailObj.Status__c);
+            system.debug('--palEmailObj.PAL_Uploaded__c---'+palEmailObj.PAL_Uploaded__c);
+            system.debug('--palEmailObj.PAL_Uploaded__c---'+palEmailObj.Invoice_Uploaded__c);
+            system.debug('--recordTypeOneTimePalContact---'+recordTypeOneTimePalContact);
+
+            if(recordType == recordTypeOneTimePalContact){
+                if(palEmailObj.No_Holding_Invoice_Needed__c == false && palEmailObj.Status__c == 'Invoice and Funds Missing' && palEmailObj.PAL_Uploaded__c == false){
+                    palEmailObj.Invoice_Uploaded__c = false;
+                    palEmailObj.PAL_Uploaded__c = false;
+                    palAttached = null;
+                    invoiceAttached = null;
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'When Email Template is Invoice & Funds Missing then PAL must be uploaded!'));
+                    return null;
+                }
+                if(palEmailObj.Status__c == 'PAL and Funds Missing' && palEmailObj.Invoice_Uploaded__c == false){
+                    palEmailObj.Invoice_Uploaded__c = false;
+                    palEmailObj.PAL_Uploaded__c = false;
+                    palAttached = null;
+                    invoiceAttached = null;
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'When Email Template is PAL & Funds Missing then Invoice must be uploaded!'));
+                    return null;
+                }
+                if(palEmailObj.Status__c == 'Funds Unavailable' && (palEmailObj.Invoice_Uploaded__c == false || palEmailObj.PAL_Uploaded__c == false)){
+                    palEmailObj.Invoice_Uploaded__c = false;
+                    palEmailObj.PAL_Uploaded__c = false;
+                    palAttached = null;
+                    invoiceAttached = null;
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'When Email Template is Funds Unavailable then Invoice & PAL must be uploaded!'));
+                    return null;
+                }
+                if(palEmailObj.Status__c == 'PAL Missing' && palEmailObj.Invoice_Uploaded__c == false){
+                    palEmailObj.Invoice_Uploaded__c = false;
+                    palEmailObj.PAL_Uploaded__c = false;
+                    palAttached = null;
+                    invoiceAttached = null;
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'When Email Template is PALS Missing then Invoice must be uploaded!'));
+                    return null;
+                }
+                if(palEmailObj.Status__c == 'Invoice missing' && palEmailObj.PAL_Uploaded__c == false){
+                    palEmailObj.Invoice_Uploaded__c = false;
+                    palEmailObj.PAL_Uploaded__c = false;
+                    palAttached = null;
+                    invoiceAttached = null;
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'When Email Template is Invoice Missing then PAL must be uploaded!'));
+                    return null;
+                }
+                if(palEmailObj.Status__c == 'All Documents Received and Funds available' && ((palEmailObj.Invoice_Uploaded__c == false && palEmailObj.No_Holding_Invoice_Needed__c != true) || palEmailObj.PAL_Uploaded__c == false)){
+                    palEmailObj.Invoice_Uploaded__c = false;
+                    palEmailObj.PAL_Uploaded__c = false;
+                    palAttached = null;
+                    invoiceAttached = null;
+                    ApexPages.addMessage(new ApexPages.message(ApexPages.severity.ERROR,'When Email Template is All documents received and funds available then PAL & Invoice must be uploaded!'));
+                    return null;
+                }
+            }
+            if(attachList.size() > 0){
+                insert attachList;
+            }
+            // Attachment Start
+            try{
+                System.debug('---pal List---'+palEmailObj);
+                System.debug('--palEmailObj.Email_Sent__c---'+palEmailObj.Email_Sent__c);
+                if(!palEmailObj.Email_Sent__c){
+                    List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
+                    List<Messaging.Emailfileattachment> fileAttachments = new List<Messaging.Emailfileattachment>();
+                    List<Attachment> attachmentList = new List<Attachment>();
+                    EmailTemplate emailTemplate = new EmailTemplate();
+
+                    Contact contact = new Contact();
+                    contact.FirstName = 'test';
+                    contact.LastName = 'Name';
+                    contact.Email = UtilContant.donNotReplyEmail; //'DoNotReply@questtrust.com';
+                    insert contact;
+
+                    if(palEmailObj.Status__c == 'All Documents Received and Funds available'){
+                        emailTemplate = [select Id, Subject, HtmlValue, Body, BrandTemplateId from EmailTemplate where developername = 'All_documents_received_and_funds_available'];
+                    }else if(palEmailObj.Status__c == 'PAL Missing'){
+                        emailTemplate = [select Id, Subject, HtmlValue, Body, BrandTemplateId from EmailTemplate where developername = 'PAL_missing'];
+                    }else if(palEmailObj.Status__c == 'Invoice Missing'){
+                        emailTemplate = [select Id, Subject, HtmlValue, Body, BrandTemplateId from EmailTemplate where developername = 'Invoice_missing'];
+                    }else if(palEmailObj.Status__c == 'Funds Unavailable'){
+                        emailTemplate = [select Id, Subject, HtmlValue, Body, BrandTemplateId from EmailTemplate where developername = 'Funds_Unavailable'];
+                    }else if(palEmailObj.Status__c == 'PAL and Funds Missing'){
+                        emailTemplate = [select Id, Subject, HtmlValue, Body, BrandTemplateId from EmailTemplate where developername = 'PAL_and_Funds_Missing'];
+                    }else if(palEmailObj.Status__c == 'Invoice and Funds Missing'){
+                        emailTemplate = [select Id, Subject, HtmlValue, Body, BrandTemplateId from EmailTemplate where developername = 'Invoice_and_Funds_Missing'];
+                    }
+                    string emailAddress=UtilContant.accountsPayableEmail;//'accountspayable@questtrust.com';
+                    OrgWideEmailAddress[] owea =
+                        Database.query('SELECT ID,IsAllowAllProfiles,DisplayName,Address FROM OrgWideEmailAddress WHERE Address = :emailAddress AND IsAllowAllProfiles = TRUE');
+
+                    //OrgWideEmailAddress[] owea = [SELECT ID,IsAllowAllProfiles,DisplayName,Address FROM OrgWideEmailAddress WHERE Address = 'accountspayable@questtrust.com' AND IsAllowAllProfiles = TRUE];
+                    if(palEmailObj.Id != null){
+                        attachmentList= [select Name, Body, BodyLength, ParentId from Attachment where ParentId =: palEmailObj.Id];
+                    }
+                    string recordtypename = Schema.SObjectType.Payment_Authorization_Letter__c.getRecordTypeInfosById().get(palEmailObj.recordtypeid).getname();
+                    if(recordtypename == recordTypeOneTimePalContact && palEmailObj.Financial_Account_Email__c != null && owea.size() > 0){
+                        system.debug('emailTemplate-->'+emailTemplate);
+                        if(emailTemplate != null){
+                            String htmlBody = emailTemplate.HtmlValue;
+                            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                            String[] toAddresses = new String[]{palEmailObj.Financial_Account_Email__c};
+                                mail.setToAddresses(toAddresses);
+                            mail.setOrgWideEmailAddressId(owea.get(0).Id);
+                            mail.setReplyTo(UtilContant.accountsPayableEmail);//accountspayable@questtrust.com
+                            mail.setBccSender(false);
+                            mail.setUseSignature(false);
+                            mail.saveAsActivity = false;
+                            mail.setWhatId(palEmailObj.Id);
+                            mail.setTargetObjectId(contact.Id);
+                            mail.settemplateid(emailTemplate.Id);
+                            Savepoint sp = Database.setSavepoint();
+                            Messaging.sendEmail(new Messaging.SingleEmailMessage[] {mail});
+                            Database.rollback(sp);
+                            String mailTextBody = mail.getPlainTextBody();
+                            String mailHtmlBody = mail.getHTMLBody();
+                            String mailSubject = mail.getSubject();
+                            mail.setHtmlBody(mailHtmlBody);
+                            if(attachmentList.size()>0){
+                                for (Attachment a : attachmentList){
+                                    if(a.ParentId == palEmailObj.Id){
+                                        Messaging.Emailfileattachment efa = new Messaging.Emailfileattachment();
+                                        efa.setFileName(a.Name);
+                                        efa.setBody(a.Body);
+                                        fileAttachments.add(efa);
+                                    }
+                                }
+                            }
+                            if(fileAttachments.size()>0){
+                                mail.setFileAttachments(fileAttachments);
+                            }
+                            emails.add(mail);
+                        }
+                    }
+                    if(emails.size()>0){
+                        system.debug('sending...');
+                       // Messaging.sendEmail(emails);
+                        if(recordType == recordTypeOneTimePalContact){
+                            palEmailObj.Email_Sent__c = true;
+                        }
+                       // palEmailObj.Invoice_Uploaded__c = false;
+                       // palEmailObj.PAL_Uploaded__c = false;
+                       system.debug('--palEmailObj.PAL_Uploaded__c--'+palEmailObj.PAL_Uploaded__c);
+                        system.debug('--palEmailObj.PAL_Uploaded__c--'+palEmailObj.Invoice_Uploaded__c);
+                        system.debug('--palEmailObj.PAL_Uploaded__c--'+palEmailObj);
+
+                        update palEmailObj;
+                        delete contact;
+                        //system.debug('Messaging...'+Messaging.sendEmail(emails));
+                    }
+                }
+            }catch(exception e){
+                system.debug('---e----'+e);
+            }
+            // Attachment End
+            PageReference pg = new PageReference('/'+palId);
+            pg.setRedirect(true);
+            return pg;
+        }catch(Exception e){
+            system.debug('--e---'+e);
+            return null;
+        }
+        return null;
+    }
+    public static void createPendingPALBasedonPAL(Set<Id> palSetId){
+        // list<Payment_Authorization_Letter__c> pallist=new list<Payment_Authorization_Letter__c>();
+
+        list<Payment_Authorization_Letter__c> pallist = [
+            select General_Comments__c,Signature__c,Sufficient_Funds_Available__c,Frequency_Date__c,Waive_Fees_Comment__c,Waive__c,Fee_Method_Selected__c,Code_Proceed__c,RecordType.DeveloperName,Checking_Savings__c,Status__c,Transaction_Codes__c,Active_Status__c,recordtype.Name,Type_of_PAL__c,Mail_Pickup_Option__c,
+            Financial_Account_Email__c,Financial_Account__c,Holding__r.Related_Asset__c,Transaction_Code__c,Amount__c,Expense_Pay__c, Comment_1__c,
+            Cashiers_Check_Fee__c,Check_ACH_Fee__c,Check_Fee__c,ACH_Fee__c,Overnight_Mail__c,Percentage_Split_by_If_Any__c,Payable_To_Account__c,
+            No_Holding_Invoice_Needed__c,Closing_Account_Fee__c,Wire_Fee__c,Payment_Type__c,Create_Unique_Split_Number__c,Split_Number2__c,Split_Number__c,
+            Wire_Account_Name__c,Combine_Checks__c,Payee_Lookup__r.Name,Payee_Lookup__r.Id,ABA_Routing__c, ABA_Account__c, Tax_Year__c,FMV_Acknowledgement__c,FMVAcknowledgement__c,
+            Payment_Beginning_Date__c,Last_Payment_Date__c,Check_Memo__c,Frequency_Start_Date__c,Expense_Pay__r.CreatedDate,USPS_Trackable_Mail_Fee__c,USPS_Fee__c from Payment_Authorization_Letter__c
+            where id IN: palSetId  and (RecordType.DeveloperName='Recurring_PAL_Data' or Status__c = 'All Documents Received and Funds available')];
+
+        list<Pending_Payment_Authorization_Letters__c> ppallist=new list<Pending_Payment_Authorization_Letters__c>();
+        //RecordType rpName = [Select id,Name,DeveloperName from Recordtype where Name='Recurring' and SobjectType = 'Pending_Payment_Authorization_Letters__c'];
+
+
+        for(Payment_Authorization_Letter__c pal:pallist) {
+            List<Pending_Payment_Authorization_Letters__c> ppalListCheck = [select id,Payment_Authorization_Letter__c from Pending_Payment_Authorization_Letters__c where Payment_Authorization_Letter__c =: pal.Id ];
+            if(ppalListCheck == null || ppalListCheck.size() <= 0){
+                RecordType rpName = [Select id,Name,DeveloperName from Recordtype where Name=:pal.recordtype.Name and SobjectType = 'Pending_Payment_Authorization_Letters__c'];
+                Pending_Payment_Authorization_Letters__c ppal = new Pending_Payment_Authorization_Letters__c();
+                ppal.Payment_Authorization_Letter__c = pal.Id;
+                ppal.Mail_Pickup_Option__c = pal.Mail_Pickup_Option__c;
+                ppal.Financial_Account_Email__c = pal.Financial_Account_Email__c;
+                ppal.Type_of_PAL__c=pal.Type_of_PAL__c;
+                ppal.Financial_Account__c = pal.Financial_Account__c;
+                ppal.Related_Asset__c=pal.Holding__r.Related_Asset__c;
+                ppal.Transaction_Code__c=pal.Transaction_Codes__c;
+                ppal.Amount__c=pal.Amount__c;
+                ppal.Payable_To_Account__c=pal.Payable_To_Account__c;
+                ppal.Payment_Type__c=pal.Payment_Type__c;
+                ppal.Waive_Fees_Comment__c = pal.Waive_Fees_Comment__c;
+                ppal.Waive__c = pal.Waive__c;
+                if(ppal.Payable_To_Account__c != null && pal.Payment_Type__c == 'Cashiers Check'){
+                    ppal.Payee_Lookup__c = null;
+                }else{
+                    ppal.Payee_Lookup__c= pal.Payee_Lookup__r.Id;
+                }
+                ppal.Fee_Method_Selected__c = pal.Fee_Method_Selected__c;
+                ppal.Create_Unique_Split_Number__c = pal.Create_Unique_Split_Number__c;
+                ppal.Split_Number__c = pal.Split_Number__c;
+                ppal.Wire_Account_Name__c = pal.Wire_Account_Name__c;
+                ppal.Payee_Lookup__c = pal.Payee_Lookup__r.Id;
+                ppal.RecordtypeId = rpName.Id;
+                ppal.No_Holding_Invoice_Needed__c= pal.No_Holding_Invoice_Needed__c;
+                ppal.Code_Proceed__c= pal.Code_Proceed__c;
+                ppal.Percentage_Split_by_If_Any__c= pal.Percentage_Split_by_If_Any__c;
+                ppal.Closing_Account__c= pal.Closing_Account_Fee__c;
+
+                ppal.Combine_Checks__c = pal.Combine_Checks__c;
+                ppal.Funding_Status__c = 'Pending';
+                ppal.ABA_Routing__c = pal.ABA_Routing__c;
+                ppal.ABA_Account__c = pal.ABA_Account__c;
+                ppal.Checking_Savings__c = pal.Checking_Savings__c;
+               /*Due_date__c will be copied from frequency start date of PAL,discussed with Nicole.*/
+               // ppal.Due_Date__c = pal.Frequency_Date__c;
+                ppal.Due_Date__c = pal.Frequency_Start_Date__c;
+                ppal.Sufficient_Funds_Available__c = pal.Sufficient_Funds_Available__c;
+                ppal.Valid_Signature__c = pal.Signature__c;
+                ppal.General_Comments__c = pal.General_Comments__c;
+                ppal.Additional_Comments_1__c = pal.Comment_1__c;
+                /*Added by Algoworks for Expenspay field mapping to pending payment authorization letter*/
+                ppal.Check_Memo__c = pal.Check_Memo__c;
+                ppal.Date_Received__c =date.valueOf(pal.Expense_Pay__r.CreatedDate);
+
+                // Added new code on Line no 544-544 asper IL-153 by mitul
+                ppal.FMV_Acknowledgement__c = pal.FMVAcknowledgement__c;
+                ppal.Expense_Pay__c = pal.Expense_Pay__c;
+                /*if(pal.Waive__c == true && (pal.Wire_Fee__c || pal.Check_Fee__c || pal.ACH_Fee__c || pal.Overnight_Mail__c || pal.Cashiers_Check_Fee__c || pal.USPS_Fee__c)){
+                    ppal.Wire_Fee__c= false;
+                    ppal.Check_Fee__c= false;
+                    ppal.ACH_Fee__c= false;
+                    ppal.Overnight_Mail__c= false;
+                    ppal.Cashiers_Check_Fee__c = false;
+                    ppal.USPS_Fee__c = false;
+                }else{
+                    ppal.Wire_Fee__c= pal.Wire_Fee__c;
+                    ppal.Check_Fee__c= pal.Check_Fee__c;
+                    ppal.ACH_Fee__c= pal.ACH_Fee__c;
+                    ppal.Overnight_Mail__c= pal.Overnight_Mail__c;
+                    ppal.Cashiers_Check_Fee__c = pal.Cashiers_Check_Fee__c;
+                    ppal.USPS_Fee__c = pal.USPS_Trackable_Mail_Fee__c;
+                }*/
+
+                ppallist.add(ppal);
+            }
+        }
+        if(ppallist.size() > 0){
+            insert ppallist;
+        }
+
+    }
+
+    public static void updatePPALOnPalUpdate(set<Id> palIdsList, map<Id, Payment_Authorization_Letter__c> PALOldMap){
+
+        list<Id> palListToUpdatePPAL = new list<Id>();
+        map<id,id> payableToMapWithId = new map<id,id>();
+        system.debug('palIdsList' + palIdsList);
+        list<Payment_Authorization_Letter__c> palRecToUpdate = new list<Payment_Authorization_Letter__c>();
+        for(Payment_Authorization_Letter__c palRec : [Select Id, Payable_To_Account__c, Comment_1__c, Transaction_Codes__c, Comment_2__c, Payable_To_Account__r.Name  from Payment_Authorization_Letter__c where Id in: palIdsList]){
+            Payment_Authorization_Letter__c oldPalRec = PALOldMap.get(palRec.Id);
+
+            system.debug('palRec.Payable_To_Account__c == '+ palRec.Payable_To_Account__c);
+            system.debug('oldPalRec.Payable_To_Account__c == '+ oldPalRec.Payable_To_Account__c);
+            if(palRec.Payable_To_Account__c != null && palRec.Payable_To_Account__c != oldPalRec.Payable_To_Account__c ){
+                system.debug('in if statement');
+                palListToUpdatePPAL.add(palRec.Id);
+                payableToMapWithId.put(palRec.Id,palRec.Payable_To_Account__c);
+            }
+            //Updating Comment 1 with transaction code
+            if(palRec.Comment_1__c == null || palRec.Comment_1__c == ''){
+                palRec.Comment_1__c = palRec.Transaction_Codes__c.substringAfter('-');
+                palListToUpdatePPAL.add(palRec.Id);
+            }
+            else if(palRec.Comment_1__c != null && palRec.Transaction_Codes__c != oldPalRec.Transaction_Codes__c){
+                palRec.Comment_1__c = palRec.Transaction_Codes__c.substringAfter('-');
+                palListToUpdatePPAL.add(palRec.Id);
+            }
+            //Updating comment 2 with Name of "Payable to Business/Individual"
+            if(palRec.Comment_2__c == null || palRec.Comment_2__c == ''){
+                palRec.Comment_2__c = palRec.Payable_To_Account__r.Name;
+                palListToUpdatePPAL.add(palRec.Id);
+            }
+            else if(palRec.Comment_2__c != null && palRec.Payable_To_Account__c != oldPalRec.Payable_To_Account__c){
+                palRec.Comment_2__c = palRec.Payable_To_Account__r.Name;
+                palListToUpdatePPAL.add(palRec.Id);
+            }
+
+            palRecToUpdate.add(palRec);
+        }
+
+        list<Pending_Payment_Authorization_Letters__c> PPALListToUpdate = new list<Pending_Payment_Authorization_Letters__c>();
+        for(Pending_Payment_Authorization_Letters__c ppalRec : [Select Id, Payable_To_Account__c, Payment_Authorization_Letter__c, Payment_Authorization_Letter__r.Id, Payment_Authorization_Letter__r.Payable_To_Account__c,
+        Payment_Authorization_Letter__r.Payable_To_Account__r.Name , Payment_Authorization_Letter__r.Comment_1__c, Payment_Authorization_Letter__r.Comment_2__c, Additional_Comments_2__c, Additional_Comments_1__c
+        from Pending_Payment_Authorization_Letters__c where Payment_Authorization_Letter__r.Id in: palListToUpdatePPAL]){
+
+            if(ppalRec.Payable_To_Account__c == null || (ppalRec.Payable_To_Account__c != ppalRec.Payment_Authorization_Letter__r.Payable_To_Account__c)){
+                ppalRec.Payable_To_Account__c = payableToMapWithId.get(ppalRec.Payment_Authorization_Letter__r.Id);
+                system.debug('Payable to account'+ ppalRec.Payable_To_Account__c);
+            }
+
+            if(ppalRec.Additional_Comments_1__c == null || (ppalRec.Additional_Comments_1__c != ppalRec.Payment_Authorization_Letter__r.Comment_1__c)){
+                ppalRec.Additional_Comments_1__c = ppalRec.Payment_Authorization_Letter__r.Comment_1__c;
+            }
+            if(ppalRec.Additional_Comments_2__c == null || (ppalRec.Additional_Comments_2__c != ppalRec.Payment_Authorization_Letter__r.Comment_2__c)){
+                ppalRec.Additional_Comments_2__c = ppalRec.Payment_Authorization_Letter__r.Comment_2__c;
+            }
+
+            PPALListToUpdate.add(ppalRec);
+
+        }
+
+        if(PPALListToUpdate.size() > 0){
+            update PPALListToUpdate;
+        }
+        if(palRecToUpdate.size() > 0){
+            update palRecToUpdate;
+        }
+
+
+    }
+
+
+}
